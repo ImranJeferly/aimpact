@@ -24,12 +24,20 @@ if ($category) {
 
 $query .= " ORDER BY b.created_at DESC";
 
-$stmt = $pdo->prepare($query);
-$stmt->execute($params);
-$blogs = $stmt->fetchAll();
+if ($pdo) {
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    $blogs = $stmt->fetchAll();
+} else {
+    $blogs = [];
+    echo '<p>Database connection error. Please try again later.</p>';
+}
 
 // Fetch categories for filter
-$categories = $pdo->query("SELECT * FROM blog_categories ORDER BY name")->fetchAll();
+$categories = [];
+if ($pdo) {
+    $categories = $pdo->query("SELECT * FROM blog_categories ORDER BY name")->fetchAll();
+}
 ?>
 
 <!DOCTYPE html>

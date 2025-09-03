@@ -34,4 +34,6 @@ try {
     ADD COLUMN IF NOT EXISTS author VARCHAR(100) AFTER content");
 } catch(PDOException $e) {
     echo "Connection failed: " . $e->getMessage();
+    // Set $pdo to null so other files can handle the error gracefully
+    $pdo = null;
 }
