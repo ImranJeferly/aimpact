@@ -1,11 +1,6 @@
 {
     "require": {
-        "php": "^8.1",
+        "php": ">=8.1",
         "phpmailer/phpmailer": "^6.9"
-    },
-    "scripts": {
-        "post-install-cmd": [
-            "php -r \"if (!file_exists('.env')) copy('.env.example', '.env');\""
-        ]
     }
 }
