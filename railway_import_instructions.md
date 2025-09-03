@@ -1,16 +1,17 @@
 # Import Database to Railway MySQL
 
-## Option 1: Command Line (Recommended)
+## ⚠️ Authentication Error Fix
 
-If you have MySQL client installed (through XAMPP or standalone), run:
+If you get `ERROR 1045: Plugin caching_sha2_password could not be loaded`, try these solutions:
 
+### Option 1A: Command Line with Authentication Fix
 ```bash
-mysql -h switchback.proxy.rlwy.net -u root -pKAKDbDMyJqyiPWWikRtJCLdPHzyuBsXl --port 48332 --protocol=TCP railway < aimpact.sql
+"C:\xampp\mysql\bin\mysql.exe" -h switchback.proxy.rlwy.net -u root -pKAKDbDMyJqyiPWWikRtJCLdPHzyuBsXl --port 48332 --protocol=TCP --default-auth=mysql_native_password railway < aimpact.sql
 ```
 
-### For XAMPP users:
+### Option 1B: If above fails, disable SSL:
 ```bash
-"C:\xampp\mysql\bin\mysql.exe" -h switchback.proxy.rlwy.net -u root -pKAKDbDMyJqyiPWWikRtJCLdPHzyuBsXl --port 48332 --protocol=TCP railway < aimpact.sql
+"C:\xampp\mysql\bin\mysql.exe" -h switchback.proxy.rlwy.net -u root -pKAKDbDMyJqyiPWWikRtJCLdPHzyuBsXl --port 48332 --protocol=TCP --ssl-mode=DISABLED --default-auth=mysql_native_password railway < aimpact.sql
 ```
 
 ## Option 2: Railway Web Console
