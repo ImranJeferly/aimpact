@@ -1,4 +1,7 @@
 <?php
+// Load environment variables
+require_once __DIR__ . '/env.php';
+
 $host = $_ENV['DB_HOST'] ?? 'localhost';
 $dbname = $_ENV['DB_NAME'] ?? 'aimpact';
 $username = $_ENV['DB_USER'] ?? 'root';
