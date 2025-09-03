@@ -2,10 +2,10 @@
 // Load environment variables
 require_once __DIR__ . '/env.php';
 
-// Check if Railway MYSQL_URL is available (preferred method)
-if (isset($_ENV['MYSQL_URL'])) {
-    // Parse Railway MySQL URL: mysql://user:password@host:port/database
-    $url = parse_url($_ENV['MYSQL_URL']);
+// Check if Railway MYSQL_PUBLIC_URL is available (preferred method for external connections)
+if (isset($_ENV['MYSQL_PUBLIC_URL'])) {
+    // Parse Railway MySQL Public URL: mysql://user:password@host:port/database
+    $url = parse_url($_ENV['MYSQL_PUBLIC_URL']);
     $host = $url['host'];
     $dbname = ltrim($url['path'], '/');
     $username = $url['user'];
