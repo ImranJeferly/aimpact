@@ -1,10 +1,23 @@
 <?php
 require_once 'config/database.php';
+require_once 'config/cache.php';
 
 $search = $_GET['search'] ?? '';
 $category = $_GET['category'] ?? '';
 
-// Update the fetch query to use author directly
+// Create cache key based on search parameters
+$cacheKey = 'blogs_' . md5($search . '_' . $category);
+
+// Try to get from cache first (only if no search/filter)
+if (empty($search) && empty($category)) {
+    $blogs = $cache->get($cacheKey);
+    if ($blogs !== null) {
+        // Use cached data
+        goto skip_query;
+    }
+}
+
+// Build query if not in cache
 $query = "SELECT b.* 
           FROM blogs b 
           WHERE b.status = 'published'";
@@ -28,10 +41,17 @@ if ($pdo) {
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);
     $blogs = $stmt->fetchAll();
+    
+    // Cache the results if no search/filter (cache for 5 minutes)
+    if (empty($search) && empty($category) && !empty($blogs)) {
+        $cache->set($cacheKey, $blogs, 300);
+    }
 } else {
     $blogs = [];
     echo '<p>Database connection error. Please try again later.</p>';
 }
+
+skip_query:
 
 // Fetch categories for filter
 $categories = [];

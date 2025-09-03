@@ -45,11 +45,21 @@ if (isset($_ENV['MYSQL_PUBLIC_URL'])) {
 }
 
 try {
-    $pdo = new PDO($dsn, $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    // Add connection timeout and performance options
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+        PDO::ATTR_PERSISTENT => true,  // Use persistent connections
+        PDO::ATTR_TIMEOUT => 5,       // Reduce timeout
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
+        PDO::MYSQL_ATTR_COMPRESS => true,  // Enable compression
+        PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true
+    ];
+    
+    $pdo = new PDO($dsn, $username, $password, $options);
 } catch(PDOException $e) {
-    echo "Connection failed: " . $e->getMessage();
+    error_log("Database connection failed: " . $e->getMessage());
     // Set $pdo to null so other files can handle the error gracefully
     $pdo = null;
 }

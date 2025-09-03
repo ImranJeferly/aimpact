@@ -6,6 +6,10 @@
 # Vendor directory
 vendor/
 
+# Cache directory
+cache/
+*.cache
+
 # OS generated files
 .DS_Store
 .DS_Store?
@@ -28,6 +32,7 @@ logs/
 # Temporary files
 tmp/
 temp/
+performance_test.tmp
 
 # Upload files (you may want to keep these)
 # uploads/
