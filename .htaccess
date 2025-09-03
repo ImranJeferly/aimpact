@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Remove .php extension
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^/]+)/?$ $1.php [L]
+
+# Handle blog with ID parameter
+RewriteRule ^blog/([0-9]+)/?$ blog.php?id=$1 [L,QSA]
