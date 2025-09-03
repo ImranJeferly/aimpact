@@ -2,13 +2,29 @@
 // Load environment variables
 require_once __DIR__ . '/env.php';
 
-$host = $_ENV['DB_HOST'] ?? 'localhost';
-$dbname = $_ENV['DB_NAME'] ?? 'aimpact';
-$username = $_ENV['DB_USER'] ?? 'root';
-$password = $_ENV['DB_PASSWORD'] ?? '';
+// Check if Railway MYSQL_URL is available (preferred method)
+if (isset($_ENV['MYSQL_URL'])) {
+    // Parse Railway MySQL URL: mysql://user:password@host:port/database
+    $url = parse_url($_ENV['MYSQL_URL']);
+    $host = $url['host'];
+    $dbname = ltrim($url['path'], '/');
+    $username = $url['user'];
+    $password = $url['pass'];
+    $port = $url['port'] ?? 3306;
+    
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname";
+} else {
+    // Fallback to individual environment variables (local development)
+    $host = $_ENV['DB_HOST'] ?? 'localhost';
+    $dbname = $_ENV['DB_NAME'] ?? 'aimpact';
+    $username = $_ENV['DB_USER'] ?? 'root';
+    $password = $_ENV['DB_PASSWORD'] ?? '';
+    
+    $dsn = "mysql:host=$host;dbname=$dbname";
+}
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $pdo = new PDO($dsn, $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Update blogs table structure to use author instead of author_id
