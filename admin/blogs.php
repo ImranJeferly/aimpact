@@ -1,15 +1,18 @@
 <?php
 session_start();
-require_once '../config/database.php';
+require_once '../config/firebase.php';
 
 if (!isset($_SESSION['admin_logged_in'])) {
     header('Location: login.php');
     exit();
 }
 
-// Fetch blogs
-$stmt = $pdo->query("SELECT * FROM blogs ORDER BY created_at DESC");
-$blogs = $stmt->fetchAll();
+// Fetch blogs from Firebase
+if ($firebaseHelper && $firebaseHelper->isConnected()) {
+    $blogs = $firebaseHelper->getAllBlogs(); // Get all blogs including drafts
+} else {
+    $blogs = [];
+}
 
 ?>
 <!DOCTYPE html>

@@ -1,5 +1,5 @@
 <?php
-require_once 'config/database.php';
+require_once 'config/firebase.php';
 require_once 'config/cache.php';
 
 $search = $_GET['search'] ?? '';
@@ -17,47 +17,28 @@ if (empty($search) && empty($category)) {
     }
 }
 
-// Build query if not in cache
-$query = "SELECT b.* 
-          FROM blogs b 
-          WHERE b.status = 'published'";
-$params = [];
-
-// Add search condition if exists
-if ($search) {
-    $query .= " AND (b.title LIKE ? OR b.content LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-}
-
-if ($category) {
-    $query .= " AND b.id IN (SELECT blog_id FROM blog_category_relations WHERE category_id = ?)";
-    $params[] = $category;
-}
-
-$query .= " ORDER BY b.created_at DESC";
-
-if ($pdo) {
-    $stmt = $pdo->prepare($query);
-    $stmt->execute($params);
-    $blogs = $stmt->fetchAll();
-    
-    // Cache the results if no search/filter (cache for 5 minutes)
-    if (empty($search) && empty($category) && !empty($blogs)) {
-        $cache->set($cacheKey, $blogs, 300);
+// Get blogs from Firebase (with fallback data)
+if ($firebaseHelper) {
+    if ($search || $category) {
+        $blogs = $firebaseHelper->searchBlogs($search, $category);
+    } else {
+        $blogs = $firebaseHelper->getAllBlogs('published');
+        
+        // Cache the results if no search/filter (cache for 5 minutes)
+        if (!empty($blogs)) {
+            $cache->set($cacheKey, $blogs, 300);
+        }
     }
 } else {
     $blogs = [];
-    echo '<p>Database connection error. Please try again later.</p>';
+    error_log("Firebase helper not available in blogs.php");
 }
 
 skip_query:
 
-// Fetch categories for filter
+// Categories are not implemented in this Firebase migration yet
+// For now, we'll use an empty array
 $categories = [];
-if ($pdo) {
-    $categories = $pdo->query("SELECT * FROM blog_categories ORDER BY name")->fetchAll();
-}
 ?>
 
 <!DOCTYPE html>
@@ -130,7 +111,18 @@ if ($pdo) {
                                     </div>
                                 </div>
                             </span>
-                            <span><?php echo date('M d, Y', strtotime($blog['created_at'])); ?></span>
+                            <span><?php 
+                                // Handle Firebase DateTime object or string
+                                if (isset($blog['created_at'])) {
+                                    if ($blog['created_at'] instanceof DateTime) {
+                                        echo $blog['created_at']->format('M d, Y');
+                                    } else {
+                                        echo date('M d, Y', strtotime($blog['created_at']));
+                                    }
+                                } else {
+                                    echo 'Recent';
+                                }
+                            ?></span>
                         </div>
                         <p class="blog-excerpt"><?php echo substr(strip_tags($blog['content']), 0, 150) . '...'; ?></p>
                         <p class="blog-preview"><?php 

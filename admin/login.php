@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../config/database.php';
+require_once '../config/firebase.php';
 
 if (isset($_SESSION['admin_logged_in'])) {
     header('Location: index.php');

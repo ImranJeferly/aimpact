@@ -1,5 +1,5 @@
 <?php
-require_once 'config/database.php';
+require_once 'config/firebase.php';
 
 $id = $_GET['id'] ?? null;
 
@@ -8,23 +8,26 @@ if (!$id) {
     exit();
 }
 
-// Fetch the blog post
-$stmt = $pdo->prepare("
-    SELECT b.* 
-    FROM blogs b 
-    WHERE b.id = ? AND b.status = 'published'
-");
-$stmt->execute([$id]);
-$blog = $stmt->fetch();
-
-if (!$blog) {
+// Fetch the blog post from Firebase (with fallback)
+if ($firebaseHelper) {
+    $blog = $firebaseHelper->getBlogById($id);
+    
+    if (!$blog || (isset($blog['status']) && $blog['status'] !== 'published')) {
+        header('Location: blogs.php');
+        exit();
+    }
+    
+    // Update view count only if Firebase is connected (skip for fallback data)
+    if ($firebaseHelper->isConnected()) {
+        $currentViews = isset($blog['views']) ? (int)$blog['views'] : 0;
+        $firebaseHelper->updateBlog($id, ['views' => $currentViews + 1]);
+    }
+    
+} else {
+    // Firebase helper not available
     header('Location: blogs.php');
     exit();
 }
-
-// Update view count
-$stmt = $pdo->prepare("UPDATE blogs SET views = views + 1 WHERE id = ?");
-$stmt->execute([$id]);
 ?>
 
 <!DOCTYPE html>

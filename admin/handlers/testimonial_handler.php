@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../../config/database.php';
+require_once '../../config/firebase.php';
 
 if (!isset($_SESSION['admin_logged_in'])) {
     die(json_encode(['success' => false, 'message' => 'Unauthorized']));
@@ -32,62 +32,90 @@ switch ($action) {
             $image_url = 'uploads/testimonials/' . $file_name;
         }
 
-        try {
+        if ($firebaseHelper && $firebaseHelper->isConnected()) {
             if ($action === 'add') {
-                $stmt = $pdo->prepare("INSERT INTO testimonials (client_name, company_name, position, content, rating, image_url, featured, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')");
-                $stmt->execute([$client_name, $company_name, $position, $content, $rating, $image_url, $featured]);
+                $testimonialData = [
+                    'client_name' => $client_name,
+                    'company_name' => $company_name,
+                    'position' => $position,
+                    'content' => $content,
+                    'rating' => $rating,
+                    'image_url' => $image_url,
+                    'featured' => $featured,
+                    'status' => 'pending'
+                ];
+                
+                $testimonialId = $firebaseHelper->addTestimonial($testimonialData);
+                if ($testimonialId) {
+                    echo json_encode(['success' => true]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to add testimonial']);
+                }
             } else {
-                $sql = "UPDATE testimonials SET client_name = ?, company_name = ?, position = ?, content = ?, rating = ?, featured = ?";
-                $params = [$client_name, $company_name, $position, $content, $rating, $featured];
+                $updateData = [
+                    'client_name' => $client_name,
+                    'company_name' => $company_name,
+                    'position' => $position,
+                    'content' => $content,
+                    'rating' => $rating,
+                    'featured' => $featured
+                ];
                 
                 if ($image_url) {
-                    $sql .= ", image_url = ?";
-                    $params[] = $image_url;
+                    $updateData['image_url'] = $image_url;
                 }
                 
-                $sql .= " WHERE id = ?";
-                $params[] = $id;
-                
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute($params);
+                $success = $firebaseHelper->updateTestimonial($id, $updateData);
+                if ($success) {
+                    echo json_encode(['success' => true]);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to update testimonial']);
+                }
             }
-            
-            echo json_encode(['success' => true]);
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database connection failed']);
         }
         break;
 
     case 'delete':
         $id = $_POST['id'] ?? null;
-        try {
-            $stmt = $pdo->prepare("DELETE FROM testimonials WHERE id = ?");
-            $stmt->execute([$id]);
-            echo json_encode(['success' => true]);
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        if ($firebaseHelper && $firebaseHelper->isConnected()) {
+            $success = $firebaseHelper->deleteTestimonial($id);
+            if ($success) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to delete testimonial']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database connection failed']);
         }
         break;
 
     case 'approve':
         $id = $_POST['id'] ?? null;
-        try {
-            $stmt = $pdo->prepare("UPDATE testimonials SET status = 'approved', approved_at = NOW() WHERE id = ?");
-            $stmt->execute([$id]);
-            echo json_encode(['success' => true]);
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        if ($firebaseHelper && $firebaseHelper->isConnected()) {
+            $success = $firebaseHelper->updateTestimonial($id, ['status' => 'approved']);
+            if ($success) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Failed to approve testimonial']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database connection failed']);
         }
         break;
 
     case 'get':
         $id = $_POST['id'] ?? null;
-        try {
-            $stmt = $pdo->prepare("SELECT * FROM testimonials WHERE id = ?");
-            $stmt->execute([$id]);
-            echo json_encode(['success' => true, 'data' => $stmt->fetch(PDO::FETCH_ASSOC)]);
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        if ($firebaseHelper && $firebaseHelper->isConnected()) {
+            $testimonial = $firebaseHelper->getTestimonialById($id);
+            if ($testimonial) {
+                echo json_encode(['success' => true, 'data' => $testimonial]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Testimonial not found']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database connection failed']);
         }
         break;
 }

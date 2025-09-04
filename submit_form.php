@@ -1,6 +1,6 @@
 <?php
 require 'vendor/autoload.php';
-require_once 'config/database.php';
+require_once 'config/firebase.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -18,12 +18,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = $_POST['phone'] ?? '';
 
     try {
-        // Database insertion
-        $sql = "INSERT INTO submissions (tasks, ai_experience, timeline, budget, business_name, contact_name, email, phone, submission_date) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-        
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$tasks, $ai_experience, $timeline, $budget, $business_name, $contact_name, $email, $phone]);
+        // Firebase submission
+        if ($firebaseHelper && $firebaseHelper->isConnected()) {
+            $submissionData = [
+                'tasks' => $tasks,
+                'ai_experience' => $ai_experience,
+                'timeline' => $timeline,
+                'budget' => $budget,
+                'business_name' => $business_name,
+                'contact_name' => $contact_name,
+                'email' => $email,
+                'phone' => $phone
+            ];
+            
+            $submissionId = $firebaseHelper->addSubmission($submissionData);
+            if (!$submissionId) {
+                throw new Exception("Failed to save submission to database");
+            }
+        } else {
+            throw new Exception("Database connection failed");
+        }
 
         // Send email to admins
         $mail = new PHPMailer(true);

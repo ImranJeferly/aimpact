@@ -1,12 +1,14 @@
 <?php
-require_once 'config/database.php';
+require_once 'config/firebase.php';
 
 $search = $_GET['search'] ?? '';
 
-$query = "SELECT * FROM blogs WHERE status = 'published' AND (title LIKE ? OR content LIKE ?)";
-$stmt = $pdo->prepare($query);
-$stmt->execute(["%$search%", "%$search%"]);
-$blogs = $stmt->fetchAll();
+// Get search results from Firebase (with fallback)
+if ($firebaseHelper) {
+    $blogs = $firebaseHelper->searchBlogs($search);
+} else {
+    $blogs = [];
+}
 
 if (empty($blogs)): ?>
     <div class="no-results">
@@ -49,7 +51,18 @@ if (empty($blogs)): ?>
                         </div>
                     </span>
                     <div class="meta-right">
-                        <span><?php echo date('F j, Y', strtotime($blog['created_at'])); ?></span>
+                        <span><?php 
+                            // Handle Firebase DateTime object or string
+                            if (isset($blog['created_at'])) {
+                                if ($blog['created_at'] instanceof DateTime) {
+                                    echo $blog['created_at']->format('F j, Y');
+                                } else {
+                                    echo date('F j, Y', strtotime($blog['created_at']));
+                                }
+                            } else {
+                                echo 'Recent';
+                            }
+                        ?></span>
                     </div>
                 </div>
                 <p class="blog-preview"><?php 

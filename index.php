@@ -1,5 +1,5 @@
 <?php
-require_once 'config/database.php';
+require_once 'config/firebase.php';
 ?>
 
 <!DOCTYPE html>
@@ -365,10 +365,12 @@ require_once 'config/database.php';
                 <div class="testimonials-wrapper">
                     <div class="testimonials-container">
                         <?php
-                        // Fetch approved and featured testimonials
-                        $stmt = $pdo->prepare("SELECT * FROM testimonials WHERE status = 'approved' ORDER BY featured DESC, created_at DESC");
-                        $stmt->execute();
-                        $testimonials = $stmt->fetchAll();
+                        // Fetch approved and featured testimonials from Firebase (with fallback)
+                        if ($firebaseHelper) {
+                            $testimonials = $firebaseHelper->getAllTestimonials('approved');
+                        } else {
+                            $testimonials = [];
+                        }
 
                         foreach ($testimonials as $testimonial):
                         ?>
