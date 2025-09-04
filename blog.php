@@ -4,7 +4,7 @@ require_once 'config/firebase.php';
 $id = $_GET['id'] ?? null;
 
 if (!$id) {
-    header('Location: blogs.php');
+    header('Location: blogs');
     exit();
 }
 
@@ -13,7 +13,7 @@ if ($firebaseHelper) {
     $blog = $firebaseHelper->getBlogById($id);
     
     if (!$blog || (isset($blog['status']) && $blog['status'] !== 'published')) {
-        header('Location: blogs.php');
+        header('Location: blogs');
         exit();
     }
     
@@ -25,7 +25,7 @@ if ($firebaseHelper) {
     
 } else {
     // Firebase helper not available
-    header('Location: blogs.php');
+    header('Location: blogs');
     exit();
 }
 ?>

@@ -1,4 +1,4 @@
-# Enable compression
+# Enable compression (if available)
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/plain
     AddOutputFilterByType DEFLATE text/html
@@ -11,7 +11,7 @@
     AddOutputFilterByType DEFLATE application/x-javascript
 </IfModule>
 
-# Enable browser caching
+# Enable browser caching (if available)
 <IfModule mod_expires.c>
     ExpiresActive on
     ExpiresByType text/css "access plus 1 month"
@@ -24,23 +24,52 @@
     ExpiresByType video/mp4 "access plus 1 month"
 </IfModule>
 
-# Set proper MIME types
-AddType video/mp4 .mp4
-AddType image/svg+xml .svg
+# Set proper MIME types (if available)
+<IfModule mod_mime.c>
+    AddType video/mp4 .mp4
+    AddType image/svg+xml .svg
+</IfModule>
 
-RewriteEngine On
+# URL Rewriting (compatible with both localhost and Railway)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Handle blog with ID parameter first (higher priority)
+    RewriteRule ^blog/([a-zA-Z0-9_-]+)/?$ blog.php?id=$1 [L,QSA]
+    
+    # Remove .php extension for all files
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^([^/]+)/?$ $1.php [L]
+    
+    # Redirect .php URLs to clean URLs (prevent duplicate content)
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+([^?\s]*?)\.php[\s?] [NC]
+    RewriteRule ^ /%1 [R=301,L]
+    
+    # Handle index redirects
+    RewriteRule ^index/?$ / [R=301,L]
+</IfModule>
 
-# Remove .php extension
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME}.php -f
-RewriteRule ^([^/]+)/?$ $1.php [L]
+# Fallback for servers without mod_rewrite
+<IfModule !mod_rewrite.c>
+    # If mod_rewrite is not available, ensure .php files are accessible
+    ErrorDocument 404 /404.php
+</IfModule>
 
-# Handle blog with ID parameter
-RewriteRule ^blog/([0-9]+)/?$ blog.php?id=$1 [L,QSA]
-
-# Security headers
+# Security headers (if available)
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options nosniff
     Header always set X-Frame-Options DENY
     Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 </IfModule>
+
+# Disable directory browsing
+Options -Indexes
+
+# Prevent access to sensitive files
+<FilesMatch "\.(env|log|sql|md)$">
+    Require all denied
+</FilesMatch>
