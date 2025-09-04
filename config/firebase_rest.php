@@ -134,6 +134,12 @@ class FirebaseRestClient {
         $response = $this->makeFirestoreRequest('POST', "/$collection", $firestoreData);
         
         if (!$response) {
+            error_log("Firebase createDocument failed - no response");
+            return false;
+        }
+        
+        if (!isset($response['name'])) {
+            error_log("Firebase createDocument failed - no 'name' in response: " . json_encode($response));
             return false;
         }
         
@@ -186,11 +192,24 @@ class FirebaseRestHelper {
     public function getAllBlogs($status = null) {
         if (!$this->isConnected()) {
             require_once __DIR__ . '/fallback_data.php';
-            return FallbackData::getSampleBlogs();
+            $blogs = FallbackData::getSampleBlogs();
+            // Filter by status if specified
+            if ($status) {
+                return array_filter($blogs, function($blog) use ($status) {
+                    return isset($blog['status']) && $blog['status'] === $status;
+                });
+            }
+            return $blogs;
         }
         
         try {
             $blogs = $this->client->getCollection('blogs');
+            
+            // If no blogs found in Firebase, use fallback data
+            if (empty($blogs)) {
+                require_once __DIR__ . '/fallback_data.php';
+                $blogs = FallbackData::getSampleBlogs();
+            }
             
             // Filter by status if specified
             if ($status) {
@@ -210,7 +229,14 @@ class FirebaseRestHelper {
         } catch (Exception $e) {
             error_log("Firebase REST getAllBlogs failed: " . $e->getMessage());
             require_once __DIR__ . '/fallback_data.php';
-            return FallbackData::getSampleBlogs();
+            $blogs = FallbackData::getSampleBlogs();
+            // Filter by status if specified for fallback data
+            if ($status) {
+                return array_filter($blogs, function($blog) use ($status) {
+                    return isset($blog['status']) && $blog['status'] === $status;
+                });
+            }
+            return $blogs;
         }
     }
     
