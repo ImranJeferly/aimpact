@@ -126,17 +126,17 @@ if ($firebaseHelper) {
         <h2>More Articles</h2>
         <div class="blog-grid">
             <?php
-            // Fetch 3 other published blogs except current one
-            $stmt = $pdo->prepare("
-                SELECT b.* 
-                FROM blogs b 
-                WHERE b.status = 'published' 
-                AND b.id != ? 
-                ORDER BY b.created_at DESC 
-                LIMIT 3
-            ");
-            $stmt->execute([$id]);
-            $relatedBlogs = $stmt->fetchAll();
+            // Fetch 3 other published blogs except current one using Firebase
+            if ($firebaseHelper) {
+                $allBlogs = $firebaseHelper->getAllBlogs('published');
+                // Filter out current blog and limit to 3
+                $relatedBlogs = array_filter($allBlogs, function($blog) use ($id) {
+                    return $blog['id'] !== $id;
+                });
+                $relatedBlogs = array_slice($relatedBlogs, 0, 3);
+            } else {
+                $relatedBlogs = [];
+            }
 
             foreach($relatedBlogs as $blog): ?>
                 <article class="blog-card fade-hidden fade-from-bottom delay-medium">

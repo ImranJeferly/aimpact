@@ -1,7 +1,5 @@
 {
     "require": {
-        "phpmailer/phpmailer": "^6.9",
-        "kreait/firebase-php": "^5.26",
-        "google/cloud-firestore": "^1.41"
+        "phpmailer/phpmailer": "^6.9"
     }
 }
