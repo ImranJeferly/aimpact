@@ -55,15 +55,15 @@ $categories = [];
     <nav style="top: 20px;">
         <img src="assets/logo.svg" alt="">
         <ul>
-            <li><a href="index#home" class="white-btn">Home</a></li>
-            <li><a href="index#whatweoffer" class="white-btn">What we offer</a></li>
-            <li><a href="index#howitworks" class="white-btn">How it works</a></li>
-            <li><a href="index#contact" class="white-btn">Contact</a></li>
-            <li><a href="index#pricing" class="white-btn">Pricing</a></li>
-            <li><a href="blogs" class="white-btn">Blog</a></li>
-            <li><a href="index#faq" class="white-btn">FAQ</a></li>
+            <li><a href="index.php#home" class="white-btn">Home</a></li>
+            <li><a href="index.php#whatweoffer" class="white-btn">What we offer</a></li>
+            <li><a href="index.php#howitworks" class="white-btn">How it works</a></li>
+            <li><a href="index.php#contact" class="white-btn">Contact</a></li>
+            <li><a href="index.php#pricing" class="white-btn">Pricing</a></li>
+            <li><a href="blogs.php" class="white-btn">Blog</a></li>
+            <li><a href="index.php#faq" class="white-btn">FAQ</a></li>
         </ul>
-        <a href="contact" class="orange-btn">Contact</a>
+        <a href="contact.php" class="orange-btn">Contact</a>
     </nav>
     
     <div class="blog-glow"></div>
@@ -129,7 +129,7 @@ $categories = [];
                             $firstSentence = strtok(strip_tags($blog['content']), '.!?');
                             echo $firstSentence . '.'; 
                         ?></p>
-                        <a href="blog?id=<?php echo $blog['id']; ?>" class="orange-btn blog-btn">Read More</a>
+                        <a href="blog.php?id=<?php echo $blog['id']; ?>" class="orange-btn blog-btn">Read More</a>
                     </div>
                 </article>
             <?php endforeach; ?>

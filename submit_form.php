@@ -395,7 +395,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userMail->send();
         
         // Redirect to thank you page
-        header('Location: thank_you');
+        header('Location: thank_you.php');
         exit();
 
     } catch(Exception $e) {

@@ -22,10 +22,10 @@ require_once 'config/firebase.php';
             <li><a href="#howitworks" class="white-btn">How it works</a></li>
             <li><a href="#contact" class="white-btn">Contact</a></li>
             <li><a href="#pricing" class="white-btn">Pricing</a></li>
-            <li><a href="blogs" class="white-btn">Blog</a></li>
+            <li><a href="blogs.php" class="white-btn">Blog</a></li>
             <li><a href="#faq" class="white-btn">FAQ</a></li>
         </ul>
-        <a href="contact" class="orange-btn">Get started</a>
+        <a href="contact.php" class="orange-btn">Get started</a>
     </nav>
     <div class="snap-scroll"> 
         <header id="home">
@@ -35,7 +35,7 @@ require_once 'config/firebase.php';
                 <h1 class="fade-hidden fade-from-bottom">Efficiency at the edge</h1>
                 <p class="fade-hidden fade-from-bottom delay-short">Enhance your business workflow with the help of top tier AI Software on the market. Automate more than half of your tasks</p>
                 <div>
-                    <a href="contact" class="orange-btn fade-hidden fade-from-left delay-medium" style="border-radius: 40px;">Get Started</a>
+                    <a href="contact.php" class="orange-btn fade-hidden fade-from-left delay-medium" style="border-radius: 40px;">Get Started</a>
                     <a href="#explore" class="white-btn fade-hidden fade-from-right delay-medium">Explore</a>
                 </div>
             </div>
@@ -354,7 +354,7 @@ require_once 'config/firebase.php';
                         </div>
                     </div>
                 </div>
-                <a href="contact" class="orange-btn how-it-works-btn fade-hidden fade-from-bottom delay-long">Get Started</a>
+                <a href="contact.php" class="orange-btn how-it-works-btn fade-hidden fade-from-bottom delay-long">Get Started</a>
             </div>
         </section>
         <section class="white-section testimonials-section">
@@ -420,7 +420,7 @@ require_once 'config/firebase.php';
                 <h2 class="contact-header fade-hidden fade-from-bottom delay-short">AI is the Future of Business<br>Are You Ready?</h2>
                 <p class="contact-text fade-hidden fade-from-bottom delay-medium">
                 Automate repetitive tasks</p>
-                <a href="contact" class="orange-btn how-it-works-btn contact-btn">Get Started</a>
+                <a href="contact.php" class="orange-btn how-it-works-btn contact-btn">Get Started</a>
                 
             </div>
         </section>
