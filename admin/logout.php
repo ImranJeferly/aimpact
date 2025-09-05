@@ -1,6 +1,6 @@
 
 <?php
-session_start();
-session_destroy();
+// Logout is now handled by Firebase Authentication JavaScript
+// This file redirects to login page
 header('Location: login.php');
 exit();

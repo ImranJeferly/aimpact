@@ -1,10 +1,9 @@
 <?php
-session_start();
 require_once '../../config/firebase.php';
+require_once 'firebase_auth_helper.php';
 
-if (!isset($_SESSION['admin_logged_in'])) {
-    die(json_encode(['success' => false, 'message' => 'Unauthorized']));
-}
+// Verify Firebase Authentication token
+requireFirebaseAuth();
 
 $action = $_POST['action'] ?? '';
 

@@ -1,3 +1,31 @@
+// Firebase Auth Helper for API Requests
+async function makeAuthenticatedRequest(url, options = {}) {
+    // Get Firebase auth token
+    let token = null;
+    if (window.adminAuth && window.adminAuth.getStoredToken) {
+        token = window.adminAuth.getStoredToken();
+    }
+    
+    if (!token && window.adminAuth && window.adminAuth.getIdToken) {
+        try {
+            token = await window.adminAuth.getIdToken();
+        } catch (error) {
+            console.error('Failed to get Firebase token:', error);
+            window.location.href = 'login.php';
+            return;
+        }
+    }
+    
+    // Add token to request
+    if (options.body && typeof options.body === 'string') {
+        options.body += `&token=${encodeURIComponent(token)}`;
+    } else if (options.body instanceof FormData) {
+        options.body.append('token', token);
+    }
+    
+    return fetch(url, options);
+}
+
 // Blog Management Functions
 function showAddForm() {
     const blogForm = document.getElementById('blogForm');
@@ -29,16 +57,18 @@ function hideForm() {
     if (testimonialForm) blogForm.style.display = 'none';
 }
 
-function editBlog(id) {
-    fetch('handlers/blog_handler.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `action=get&id=${id}`
-    })
-    .then(response => response.json())
-    .then(data => {
+async function editBlog(id) {
+    try {
+        const response = await makeAuthenticatedRequest('handlers/blog_handler.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `action=get&id=${id}`
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
             const blog = data.data;
             document.getElementById('blogForm').style.display = 'block';
@@ -60,11 +90,10 @@ function editBlog(id) {
             console.error('Error fetching blog:', data.message);
             alert('Error fetching blog data');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error:', error);
         alert('Error fetching blog data');
-    });
+    }
 }
 
 function deleteBlog(id) {

@@ -1,54 +1,61 @@
 <?php
-session_start();
+// Firebase Authentication handles access control
 require_once '../config/firebase.php';
 
-if (!isset($_SESSION['admin_logged_in'])) {
-    header('Location: login.php');
-    exit();
-}
-
-$categories = $pdo->query("SELECT * FROM blog_categories ORDER BY name")->fetchAll();
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['title'] ?? '';
     $content = $_POST['content'] ?? '';
     $status = $_POST['status'] ?? 'draft';
+    $author = $_POST['author'] ?? 'Admin';
+    
+    // Generate slug from title
     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
     
+    // Handle image upload if present
+    $imageUrl = '';
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = '../uploads/blogs/';
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $fileExtension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $fileName = uniqid() . '.' . $fileExtension;
+        $uploadPath = $uploadDir . $fileName;
+        
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
+            $imageUrl = 'uploads/blogs/' . $fileName;
+        }
+    }
+    
+    // Prepare blog data for Firebase
+    $blogData = [
+        'title' => $title,
+        'slug' => $slug,
+        'content' => $content,
+        'status' => $status,
+        'author' => $author,
+        'image_url' => $imageUrl,
+        'views' => 0,
+        'created_at' => date('Y-m-d H:i:s'),
+        'updated_at' => date('Y-m-d H:i:s')
+    ];
+    
     try {
-        $pdo->beginTransaction();
-        
-        // Handle image upload
-        $image_url = null;
-        if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-            $upload_dir = '../uploads/blogs/';
-            if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
+        // Add blog to Firebase
+        if ($firebaseHelper && $firebaseHelper->isConnected()) {
+            $blogId = $firebaseHelper->addBlog($blogData);
+            if ($blogId) {
+                $message = 'Blog post created successfully! ID: ' . $blogId;
+            } else {
+                $message = 'Error: Failed to create blog post in Firebase';
             }
-            
-            $file_name = uniqid() . '-' . $_FILES['image']['name'];
-            move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $file_name);
-            $image_url = 'uploads/blogs/' . $file_name;
+        } else {
+            $message = 'Error: Firebase not connected';
         }
-        
-        // Insert blog post
-        $stmt = $pdo->prepare("INSERT INTO blogs (title, slug, content, image_url, status, author_id) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$title, $slug, $content, $image_url, $status, $_SESSION['admin_id']]);
-        $blog_id = $pdo->lastInsertId();
-        
-        // Handle categories
-        if (!empty($_POST['categories'])) {
-            $stmt = $pdo->prepare("INSERT INTO blog_category_relations (blog_id, category_id) VALUES (?, ?)");
-            foreach ($_POST['categories'] as $category_id) {
-                $stmt->execute([$blog_id, $category_id]);
-            }
-        }
-        
-        $pdo->commit();
-        $message = 'Blog post created successfully!';
     } catch (Exception $e) {
-        $pdo->rollBack();
         $message = 'Error: ' . $e->getMessage();
     }
 }
@@ -60,9 +67,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Blog - AImpact</title>
     <link rel="stylesheet" href="css/admin.css">
+    <style>
+        .loading-spinner { display: none; text-align: center; padding: 50px; }
+        .auth-protected { display: none; }
+    </style>
 </head>
 <body>
-    <div class="adm-container">
+    <div class="loading-spinner">
+        <h2>Loading...</h2>
+    </div>
+    <div class="adm-container auth-protected">
         <nav class="adm-navbar">
             <h1>Add New Blog</h1>
             <div class="adm-nav-links">
@@ -118,11 +132,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </select>
                 </div>
 
+                <div class="adm-form-group">
+                    <label>Author:</label>
+                    <select name="author" class="adm-select">
+                        <option value="Imran">Imran</option>
+                        <option value="Huseyn">Huseyn</option>
+                        <option value="Kamran">Kamran</option>
+                        <option value="Admin" selected>Admin</option>
+                    </select>
+                </div>
+
                 <button type="submit" class="adm-btn adm-btn-primary">Create Blog Post</button>
             </form>
         </div>
     </div>
 
+    <script type="module" src="firebase-config.php"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const authProtected = document.querySelector('.auth-protected');
+            
+            // Show loading initially
+            loadingSpinner.style.display = 'block';
+            
+            // Wait for Firebase auth to initialize
+            setTimeout(() => {
+                if (window.adminAuth && window.adminAuth.getCurrentUser()) {
+                    // User is authenticated, show content
+                    loadingSpinner.style.display = 'none';
+                    authProtected.style.display = 'block';
+                } else {
+                    // User not authenticated, redirect to login
+                    window.location.href = 'login.php';
+                }
+            }, 1000);
+
+            // Update logout functionality
+            const logoutBtn = document.querySelector('a[href="logout.php"]');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (window.adminAuth) {
+                        await window.adminAuth.signOut();
+                        window.location.href = 'login.php';
+                    }
+                });
+            }
+        });
+    </script>
     <script src="js/admin.js"></script>
+    <script src="js/firebase-admin.js"></script>
 </body>
 </html>

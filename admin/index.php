@@ -1,15 +1,16 @@
 <?php
-session_start();
+// Firebase Authentication handles access control
 require_once '../config/firebase.php';
 
-if (!isset($_SESSION['admin_logged_in'])) {
-    header('Location: login.php');
-    exit();
+// Fetch submissions from Firebase
+$submissions = [];
+if ($firebaseHelper && $firebaseHelper->isConnected()) {
+    try {
+        $submissions = $firebaseHelper->getAllSubmissions();
+    } catch (Exception $e) {
+        error_log("Error fetching submissions: " . $e->getMessage());
+    }
 }
-
-// Fetch submissions
-$stmt = $pdo->query("SELECT * FROM submissions ORDER BY submission_date DESC");
-$submissions = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -18,9 +19,16 @@ $submissions = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - AImpact</title>
     <link rel="stylesheet" href="css/admin.css">
+    <style>
+        .loading-spinner { display: none; text-align: center; padding: 50px; }
+        .auth-protected { display: none; }
+    </style>
 </head>
 <body>
-    <div class="adm-container">
+    <div class="loading-spinner">
+        <h2>Loading...</h2>
+    </div>
+    <div class="adm-container auth-protected">
         <nav class="adm-navbar">
             <h1>AImpact Admin</h1>
             <div class="adm-nav-links">
@@ -47,7 +55,7 @@ $submissions = $stmt->fetchAll();
                     <tbody>
                         <?php foreach ($submissions as $submission): ?>
                         <tr>
-                            <td><?php echo date('Y-m-d H:i', strtotime($submission['submission_date'])); ?></td>
+                            <td><?php echo date('Y-m-d H:i', strtotime($submission['created_at'])); ?></td>
                             <td><?php echo htmlspecialchars($submission['business_name']); ?></td>
                             <td><?php echo htmlspecialchars($submission['contact_name']); ?></td>
                             <td><?php echo htmlspecialchars($submission['email']); ?></td>
@@ -60,5 +68,40 @@ $submissions = $stmt->fetchAll();
             </div>
         </div>
     </div>
+
+    <script type="module" src="firebase-config.php"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const authProtected = document.querySelector('.auth-protected');
+            
+            // Show loading initially
+            loadingSpinner.style.display = 'block';
+            
+            // Wait for Firebase auth to initialize
+            setTimeout(() => {
+                if (window.adminAuth && window.adminAuth.getCurrentUser()) {
+                    // User is authenticated, show content
+                    loadingSpinner.style.display = 'none';
+                    authProtected.style.display = 'block';
+                } else {
+                    // User not authenticated, redirect to login
+                    window.location.href = 'login.php';
+                }
+            }, 1000);
+
+            // Update logout functionality
+            const logoutBtn = document.querySelector('a[href="logout.php"]');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (window.adminAuth) {
+                        await window.adminAuth.signOut();
+                        window.location.href = 'login.php';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

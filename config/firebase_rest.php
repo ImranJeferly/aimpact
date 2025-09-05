@@ -397,6 +397,26 @@ class FirebaseRestHelper {
         }
     }
     
+    public function getAllSubmissions() {
+        if (!$this->isConnected()) return [];
+        
+        try {
+            $submissions = $this->client->getCollection('submissions');
+            
+            // Sort by created_at DESC
+            usort($submissions, function($a, $b) {
+                $aTime = isset($a['created_at']) ? strtotime($a['created_at']) : 0;
+                $bTime = isset($b['created_at']) ? strtotime($b['created_at']) : 0;
+                return $bTime - $aTime;
+            });
+            
+            return array_values($submissions);
+        } catch (Exception $e) {
+            error_log("Firebase REST getAllSubmissions failed: " . $e->getMessage());
+            return [];
+        }
+    }
+    
     // Search operations
     public function searchBlogs($search = '', $category = '') {
         // Get all blogs first, then filter (Firestore REST doesn't support complex queries easily)
