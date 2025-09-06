@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firebase Auth Test</title>
+</head>
+<body>
+    <h1>Firebase Authentication Test</h1>
+    <div id="status">Initializing...</div>
+    <div id="error" style="color: red;"></div>
+    
+    <script type="module">
+        try {
+            // Import Firebase
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+            import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+            
+            // Your Firebase config (hardcoded for testing)
+            const firebaseConfig = {
+                apiKey: "AIzaSyA8Uaq8DVhb0VxuZJtGK4w_Zl5l6gECfC0",
+                authDomain: "aimpact-22bcb.firebaseapp.com",
+                databaseURL: "https://aimpact-22bcb-default-rtdb-default-rtdb.firebaseio.com/",
+                projectId: "aimpact-22bcb",
+                storageBucket: "aimpact-22bcb.firebasestorage.app",
+                messagingSenderId: "434061355058",
+                appId: "1:434061355058:web:6a26ee4db08ab7c95becd8",
+                measurementId: "G-FE0TBV97WX"
+            };
+            
+            // Initialize Firebase
+            console.log('Initializing Firebase with config:', firebaseConfig);
+            const app = initializeApp(firebaseConfig);
+            console.log('Firebase app initialized:', app);
+            
+            // Initialize Auth
+            const auth = getAuth(app);
+            console.log('Firebase Auth initialized:', auth);
+            
+            document.getElementById('status').textContent = 'Firebase initialized successfully!';
+            document.getElementById('status').style.color = 'green';
+            
+            // Test auth state
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    console.log('User is signed in:', user);
+                } else {
+                    console.log('User is signed out');
+                }
+            });
+            
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            document.getElementById('error').textContent = 'Error: ' + error.message;
+            document.getElementById('status').textContent = 'Failed to initialize Firebase';
+            document.getElementById('status').style.color = 'red';
+        }
+    </script>
+</body>
+</html>

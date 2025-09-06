@@ -20,41 +20,45 @@ const firebaseConfig = {
     measurementId: "<?php echo $_ENV['FIREBASE_MEASUREMENT_ID']; ?>"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// Initialize Firebase with error handling
+let app, auth;
+try {
+    console.log('Initializing Firebase with config:', firebaseConfig);
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    console.log('Firebase initialized successfully');
+} catch (error) {
+    console.error('Firebase initialization failed:', error);
+    alert('Firebase configuration error: ' + error.message + '\n\nPlease check Firebase setup in console.');
+    // Redirect to prevent further errors
+    window.location.href = '../index.php';
+}
 
-// Admin Authentication Functions
-window.adminAuth = {
-    // Sign in admin user
+// Admin Authentication Functions (only if Firebase initialized)
+if (app && auth) {
+    window.adminAuth = {
+    // Sign in admin user (any authenticated user is treated as admin)
     signIn: async function(email, password) {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             
-            // Get the ID token to verify admin status
+            // Get the ID token for API requests
             const idToken = await user.getIdToken();
-            const idTokenResult = await user.getIdTokenResult();
             
-            // Check if user has admin claim
-            if (idTokenResult.claims.admin) {
-                // Store token for API requests
-                sessionStorage.setItem('adminToken', idToken);
-                sessionStorage.setItem('adminUser', JSON.stringify({
-                    uid: user.uid,
-                    email: user.email
-                }));
-                
-                return {
-                    success: true,
-                    user: user,
-                    token: idToken,
-                    message: 'Admin login successful'
-                };
-            } else {
-                await signOut(auth);
-                throw new Error('Access denied. Admin privileges required.');
-            }
+            // Store token for API requests (any authenticated user is admin)
+            sessionStorage.setItem('adminToken', idToken);
+            sessionStorage.setItem('adminUser', JSON.stringify({
+                uid: user.uid,
+                email: user.email
+            }));
+            
+            return {
+                success: true,
+                user: user,
+                token: idToken,
+                message: 'Admin login successful'
+            };
         } catch (error) {
             console.error('Admin login error:', error);
             return {
@@ -108,21 +112,10 @@ window.adminAuth.onAuthStateChanged((user) => {
     const currentPage = window.location.pathname.split('/').pop();
     
     if (user) {
-        // User is signed in, check admin claims
-        user.getIdTokenResult().then((idTokenResult) => {
-            if (idTokenResult.claims.admin) {
-                // User is admin
-                if (currentPage === 'login.php') {
-                    window.location.href = 'index.php';
-                }
-            } else {
-                // User is not admin, sign out
-                signOut(auth);
-                if (currentPage !== 'login.php') {
-                    window.location.href = 'login.php';
-                }
-            }
-        });
+        // User is signed in (any authenticated user is admin)
+        if (currentPage === 'login.php') {
+            window.location.href = 'index.php';
+        }
     } else {
         // User is signed out
         if (currentPage !== 'login.php') {
@@ -130,3 +123,25 @@ window.adminAuth.onAuthStateChanged((user) => {
         }
     }
 });
+
+} else {
+    // Firebase not initialized, provide fallback
+    console.error('Firebase not initialized - adminAuth not available');
+    window.adminAuth = {
+        signIn: async function() {
+            return { success: false, error: 'Firebase not initialized' };
+        },
+        signOut: async function() {
+            window.location.href = 'login.php';
+        },
+        getCurrentUser: function() {
+            return null;
+        },
+        getIdToken: async function() {
+            return null;
+        },
+        getStoredToken: function() {
+            return null;
+        }
+    };
+}
