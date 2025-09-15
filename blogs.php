@@ -47,15 +47,36 @@ $categories = [];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blog - AImpact</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hamburgers/1.2.1/hamburgers.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="js/animations.js"></script>
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 </head>
 <body>
-    <nav style="top: 20px;">
-        <img src="assets/logo.svg" alt="">
+    <nav style="top: 0px;">
+        <a href="index.php"><img src="assets/logo.svg" alt="AImpact Logo"></a>
         <ul>
-            <li><a href="index.php#home" class="white-btn">Home</a></li>
+            <li><a href="index.php#whatweoffer" class="white-btn">What we offer</a></li>
+            <li><a href="index.php#howitworks" class="white-btn">How it works</a></li>
+            <li><a href="index.php#contact" class="white-btn">Contact</a></li>
+            <li><a href="index.php#pricing" class="white-btn">Pricing</a></li>
+            <li><a href="blogs.php" class="white-btn">Blog</a></li>
+            <li><a href="index.php#faq" class="white-btn">FAQ</a></li>
+        </ul>
+        <div class="nav-mobile-controls">
+            <a href="contact.php" class="orange-btn">Contact</a>
+            <button class="hamburger hamburger--spin" type="button">
+                <span class="hamburger-box">
+                    <span class="hamburger-inner"></span>
+                </span>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu">
+        <ul>
             <li><a href="index.php#whatweoffer" class="white-btn">What we offer</a></li>
             <li><a href="index.php#howitworks" class="white-btn">How it works</a></li>
             <li><a href="index.php#contact" class="white-btn">Contact</a></li>
@@ -64,7 +85,7 @@ $categories = [];
             <li><a href="index.php#faq" class="white-btn">FAQ</a></li>
         </ul>
         <a href="contact.php" class="orange-btn">Contact</a>
-    </nav>
+    </div>
     
     <div class="blog-glow"></div>
     <div class="blog-container">
@@ -157,6 +178,78 @@ $categories = [];
     </footer>
     <script src="js/animations.js"></script>
     <script>
+        const nav = document.querySelector('nav');
+        const hamburger = document.querySelector('.hamburger');
+        const mobileMenu = document.querySelector('.mobile-menu');
+        let lastScrollTop = 0;
+        let isMobile = window.innerWidth <= 768;
+
+        // Update mobile detection on resize
+        window.addEventListener('resize', function() {
+            isMobile = window.innerWidth <= 768;
+        });
+
+        // Navbar scroll behavior
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Regular scrolled class for styling
+            if (scrollTop > 100) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+
+            // Mobile auto-hide functionality
+            if (isMobile && scrollTop > 100) {
+                if (scrollTop > lastScrollTop && scrollTop - lastScrollTop > 5) {
+                    // Scrolling down - hide navbar (with threshold to prevent flicker)
+                    nav.classList.add('nav-hidden');
+                } else if (scrollTop < lastScrollTop && lastScrollTop - scrollTop > 5) {
+                    // Scrolling up - show navbar (with threshold to prevent flicker)
+                    nav.classList.remove('nav-hidden');
+                }
+            } else if (isMobile) {
+                // At top of page - always show navbar
+                nav.classList.remove('nav-hidden');
+            }
+            
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // For Mobile or negative scrolling
+        });
+
+        // Hamburger menu functionality
+        hamburger.addEventListener('click', function() {
+            hamburger.classList.toggle('is-active');
+            mobileMenu.classList.toggle('active');
+            
+            // Prevent body scroll when menu is open
+            if (mobileMenu.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Close mobile menu when clicking on a link
+        const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                hamburger.classList.remove('is-active');
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Close mobile menu when clicking outside
+        mobileMenu.addEventListener('click', function(e) {
+            if (e.target === mobileMenu) {
+                hamburger.classList.remove('is-active');
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Search functionality
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
             let searchTimeout;
