@@ -3,8 +3,28 @@ async function makeAuthenticatedRequest(url, options = {}) {
     // Get Firebase auth token
     let token = null;
     if (window.adminAuth && window.adminAuth.getStoredToken) {
-        token = window.adminAuth.getStoredToken();
-    }
+        token = window.adminAuth.getSto           
+        fetch('handlers/blog_handler.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting form: ' + error.message);
+            });}
     
     if (!token && window.adminAuth && window.adminAuth.getIdToken) {
         try {
@@ -183,17 +203,33 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = new FormData(this);
             formData.append('action', formData.get('id') ? 'edit' : 'add');
-            formData.append('content', tinymce.get('content').getContent());
+            
+            // Get content from textarea instead of TinyMCE
+            const contentField = document.getElementById('content') || document.querySelector('textarea[name="content"]');
+            if (contentField) {
+                formData.set('content', contentField.value);
+            }
             
             fetch('handlers/blog_handler.php', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting form: ' + error.message);
             });
         });
     }
