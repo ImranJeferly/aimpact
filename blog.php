@@ -17,7 +17,7 @@ if ($firebaseHelper) {
         exit();
     }
     
-    // Update view count only if Firebase is connected (skip for fallback data)
+    // Update view count with fixed Firebase PATCH method
     if ($firebaseHelper->isConnected()) {
         $firebaseHelper->incrementBlogViews($id);
     }

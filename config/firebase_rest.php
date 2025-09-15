@@ -149,7 +149,18 @@ class FirebaseRestClient {
     // Update a document
     public function updateDocument($collection, $documentId, $data) {
         $firestoreData = $this->convertToFirestoreDocument($data);
-        $response = $this->makeFirestoreRequest('PATCH', "/$collection/$documentId", $firestoreData);
+        
+        // Create updateMask to specify which fields to update (prevents overwriting other fields)
+        $fieldPaths = array_keys($data);
+        $updateMaskParams = [];
+        foreach ($fieldPaths as $field) {
+            $updateMaskParams[] = 'updateMask.fieldPaths=' . urlencode($field);
+        }
+        $updateMask = implode('&', $updateMaskParams);
+        
+        $url = "/$collection/$documentId?" . $updateMask;
+        
+        $response = $this->makeFirestoreRequest('PATCH', $url, $firestoreData);
         
         return $response !== null;
     }
