@@ -1,0 +1,75 @@
+// Firebase Storage Security Rules
+// Copy these rules to your Firebase Console > Storage > Rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Blog images
+    match /blogs/{imageId} {
+      // Allow everyone to read blog images
+      allow read: if true;
+      
+      // Only authenticated users can upload blog images
+      allow write: if request.auth != null &&
+        // Ensure it's an image file
+        request.resource.contentType.matches('image/.*') &&
+        // Limit file size to 5MB
+        request.resource.size < 5 * 1024 * 1024 &&
+        // Ensure valid image extensions
+        request.resource.contentType in [
+          'image/jpeg', 
+          'image/jpg', 
+          'image/png', 
+          'image/gif', 
+          'image/webp'
+        ];
+      
+      // Allow authenticated users to delete their uploads
+      allow delete: if request.auth != null;
+    }
+    
+    // Testimonial images
+    match /testimonials/{imageId} {
+      // Allow everyone to read testimonial images
+      allow read: if true;
+      
+      // Only authenticated users can upload testimonial images
+      allow write: if request.auth != null &&
+        // Ensure it's an image file
+        request.resource.contentType.matches('image/.*') &&
+        // Limit file size to 5MB
+        request.resource.size < 5 * 1024 * 1024 &&
+        // Ensure valid image extensions
+        request.resource.contentType in [
+          'image/jpeg', 
+          'image/jpg', 
+          'image/png', 
+          'image/gif', 
+          'image/webp'
+        ];
+      
+      // Allow authenticated users to delete their uploads
+      allow delete: if request.auth != null;
+    }
+    
+    // General uploads folder (if needed for other files)
+    match /uploads/{allPaths=**} {
+      // Allow everyone to read
+      allow read: if true;
+      
+      // Only authenticated users can upload
+      allow write: if request.auth != null &&
+        // Limit file size to 10MB for general uploads
+        request.resource.size < 10 * 1024 * 1024;
+      
+      // Allow authenticated users to delete
+      allow delete: if request.auth != null;
+    }
+    
+    // Default rule: deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

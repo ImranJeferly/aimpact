@@ -7,10 +7,12 @@
 class FirebaseStorageHelper {
     private $projectId;
     private $storageBucket;
+    private $apiKey;
     
-    public function __construct($projectId, $storageBucket = null) {
+    public function __construct($projectId, $storageBucket = null, $apiKey = null) {
         $this->projectId = $projectId;
-        $this->storageBucket = $storageBucket ?: $projectId . '.appspot.com';
+        $this->storageBucket = $storageBucket ?: (defined('FIREBASE_STORAGE_BUCKET') ? FIREBASE_STORAGE_BUCKET : $projectId . '.appspot.com');
+        $this->apiKey = $apiKey ?: (defined('FIREBASE_API_KEY') ? FIREBASE_API_KEY : '');
     }
     
     /**
@@ -67,8 +69,13 @@ class FirebaseStorageHelper {
                 return $result;
             }
             
-            // Upload to Firebase Storage using REST API
+            // Upload to Firebase Storage using REST API with authentication
             $uploadUrl = "https://firebasestorage.googleapis.com/v0/b/{$this->storageBucket}/o?name=" . urlencode($storagePath);
+            
+            // Add API key for authentication if available
+            if (!empty($this->apiKey)) {
+                $uploadUrl .= "&key=" . urlencode($this->apiKey);
+            }
             
             $ch = curl_init();
             curl_setopt_array($ch, [
@@ -79,7 +86,8 @@ class FirebaseStorageHelper {
                 CURLOPT_HTTPHEADER => [
                     'Content-Type: ' . $mimeType,
                     'Content-Length: ' . strlen($fileContent)
-                ]
+                ],
+                CURLOPT_VERBOSE => true
             ]);
             
             $response = curl_exec($ch);

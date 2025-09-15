@@ -183,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
     </script>
-    <script src="js/admin.js"></script>
-    <script src="js/firebase-admin.js"></script>
+    <script src="js/admin.js?v=<?php echo time(); ?>"></script>
+    <script src="js/firebase-admin.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

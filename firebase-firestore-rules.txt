@@ -1,0 +1,80 @@
+// Firebase Firestore Security Rules
+// Copy these rules to your Firebase Console > Firestore Database > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Blogs collection
+    match /blogs/{blogId} {
+      // Allow everyone to read blogs
+      allow read: if true;
+      
+      // Only authenticated users can create, update, delete
+      allow create, update, delete: if request.auth != null;
+      
+      // Additional validation for blog documents
+      allow write: if request.auth != null &&
+        // Ensure required fields are present
+        request.resource.data.keys().hasAll(['title', 'content', 'author', 'status']) &&
+        // Ensure status is valid
+        request.resource.data.status in ['draft', 'published'] &&
+        // Ensure title and content are not empty
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.content.size() > 0;
+    }
+    
+    // Testimonials collection
+    match /testimonials/{testimonialId} {
+      // Allow everyone to read testimonials
+      allow read: if true;
+      
+      // Only authenticated users can create, update, delete
+      allow create, update, delete: if request.auth != null;
+      
+      // Additional validation for testimonial documents
+      allow write: if request.auth != null &&
+        // Ensure required fields are present
+        request.resource.data.keys().hasAll(['client_name', 'content', 'rating']) &&
+        // Ensure rating is between 1 and 5
+        request.resource.data.rating >= 1 && request.resource.data.rating <= 5 &&
+        // Ensure client_name and content are not empty
+        request.resource.data.client_name.size() > 0 &&
+        request.resource.data.content.size() > 0;
+    }
+    
+    // Submissions collection (form submissions)
+    match /submissions/{submissionId} {
+      // Allow everyone to create submissions (contact form)
+      allow create: if true;
+      
+      // Only authenticated users can read, update, delete submissions
+      allow read, update, delete: if request.auth != null;
+      
+      // Validation for submissions
+      allow create: if 
+        // Ensure required fields are present
+        request.resource.data.keys().hasAll(['name', 'email', 'message']) &&
+        // Ensure fields are not empty
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.email.size() > 0 &&
+        request.resource.data.message.size() > 0 &&
+        // Basic email validation
+        request.resource.data.email.matches('.*@.*\\..*');
+    }
+    
+    // Categories collection (if you add categories later)
+    match /categories/{categoryId} {
+      // Allow everyone to read categories
+      allow read: if true;
+      
+      // Only authenticated users can create, update, delete
+      allow create, update, delete: if request.auth != null;
+    }
+    
+    // Default rule: deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
