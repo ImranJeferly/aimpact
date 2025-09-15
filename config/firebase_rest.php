@@ -202,22 +202,41 @@ class FirebaseRestHelper {
     // Blog operations
     public function getAllBlogs($status = null) {
         if (!$this->isConnected()) {
+            error_log("getAllBlogs: Not connected to Firebase");
             return []; // Return empty array instead of fallback data
         }
         
         try {
             $blogs = $this->client->getCollection('blogs');
+            error_log("getAllBlogs: Raw collection returned " . count($blogs) . " blogs");
             
             // Return empty array if no blogs found, don't use fallback
             if (empty($blogs)) {
+                error_log("getAllBlogs: No blogs found in collection");
                 return [];
             }
             
             // Filter by status if specified
             if ($status) {
+                $originalCount = count($blogs);
+                
+                // Debug: Log status of each blog
+                foreach ($blogs as $blog) {
+                    $blogStatus = isset($blog['status']) ? $blog['status'] : 'NO_STATUS';
+                    error_log("Blog '{$blog['title']}' has status: '$blogStatus'");
+                }
+                
                 $blogs = array_filter($blogs, function($blog) use ($status) {
-                    return isset($blog['status']) && $blog['status'] === $status;
+                    $blogStatus = isset($blog['status']) ? $blog['status'] : '';
+                    
+                    // If no status is set, consider it as 'draft' for backward compatibility
+                    if ($blogStatus === '') {
+                        $blogStatus = 'draft';
+                    }
+                    
+                    return $blogStatus === $status;
                 });
+                error_log("getAllBlogs: Filtered from $originalCount to " . count($blogs) . " blogs with status '$status'");
             }
             
             // Sort by created_at DESC
@@ -227,6 +246,7 @@ class FirebaseRestHelper {
                 return $bTime - $aTime;
             });
             
+            error_log("getAllBlogs: Returning " . count($blogs) . " sorted blogs");
             return array_values($blogs);
         } catch (Exception $e) {
             error_log("Firebase REST getAllBlogs failed: " . $e->getMessage());

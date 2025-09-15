@@ -3421,12 +3421,11 @@ footer.white-section {
 }
 
 .blogs-preview-section .blog-grid {
-    margin: 40px 0;
+    margin: 0px 0;
 }
 
 .blog-preview-cta {
     text-align: center;
-    margin-top: 50px;
 }
 
 .blog-preview-cta .how-it-works-btn:hover {
