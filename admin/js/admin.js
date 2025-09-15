@@ -197,31 +197,43 @@ function approveTestimonial(id) {
 
 // Add form submit handlers
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up form handlers');
+    
     const blogForm = document.getElementById('saveBlogForm');
     if (blogForm) {
+        console.log('Blog form found, adding event listener');
         blogForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            console.log('Blog form submitted');
+            
             const formData = new FormData(this);
             formData.append('action', formData.get('id') ? 'edit' : 'add');
             
-            // Get content from textarea instead of TinyMCE
+            // Get content from textarea - NO TINYMCE
             const contentField = document.getElementById('content') || document.querySelector('textarea[name="content"]');
             if (contentField) {
+                console.log('Setting content from textarea:', contentField.value.substring(0, 50) + '...');
                 formData.set('content', contentField.value);
+            } else {
+                console.error('Content field not found!');
             }
             
+            console.log('Submitting to blog handler...');
             fetch('handlers/blog_handler.php', {
                 method: 'POST',
                 body: formData
             })
             .then(response => {
+                console.log('Response status:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.success) {
+                    alert('Blog saved successfully!');
                     location.reload();
                 } else {
                     alert('Error: ' + (data.message || 'Unknown error'));
@@ -232,6 +244,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Error submitting form: ' + error.message);
             });
         });
+    } else {
+        console.log('Blog form not found on this page');
     }
 
     const testimonialForm = document.getElementById('saveTestimonialForm');
