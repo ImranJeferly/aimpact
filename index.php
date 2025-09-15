@@ -420,6 +420,56 @@ require_once 'config/firebase.php';
                 </div>
             </div>
         </section>
+        
+        <!-- Latest Blogs Section -->
+        <section class="white-section blogs-preview-section">
+            <div class="white-section-con">
+                <div class="chart-content">
+                    <h2 class="fade-hidden fade-from-bottom">Latest from Our Blog</h2>
+                    <p class="fade-hidden fade-from-bottom delay-short">Stay updated with the latest AI trends and insights</p>
+                </div>
+                <div class="blog-preview-grid">
+                    <?php
+                    // Fetch latest 3 published blogs from Firebase (with fallback)
+                    if ($firebaseHelper) {
+                        $blogs = $firebaseHelper->getAllBlogs('published');
+                        // Limit to 3 most recent blogs
+                        $latestBlogs = array_slice($blogs, 0, 3);
+                    } else {
+                        $latestBlogs = [];
+                    }
+
+                    foreach($latestBlogs as $blog): ?>
+                        <article class="blog-preview-card fade-hidden fade-from-bottom delay-medium">
+                            <?php if($blog['image_url']): ?>
+                                <div class="blog-preview-image">
+                                    <img src="<?php echo htmlspecialchars($blog['image_url']); ?>" alt="<?php echo htmlspecialchars($blog['title']); ?>">
+                                </div>
+                            <?php endif; ?>
+                            <div class="blog-preview-content">
+                                <h3><?php echo htmlspecialchars($blog['title']); ?></h3>
+                                <p><?php echo htmlspecialchars(substr($blog['excerpt'], 0, 120)) . '...'; ?></p>
+                                <div class="blog-preview-meta">
+                                    <span class="blog-preview-author"><?php echo htmlspecialchars($blog['author']); ?></span>
+                                    <span class="blog-preview-date"><?php echo date('M j, Y', strtotime($blog['published_date'])); ?></span>
+                                </div>
+                                <a href="blog.php?id=<?php echo $blog['id']; ?>" class="blog-preview-link">Read More</a>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                    
+                    <?php if (count($latestBlogs) === 0): ?>
+                        <div class="no-blogs">
+                            <p>No blog posts available at the moment.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="blog-preview-cta fade-hidden fade-from-bottom delay-long">
+                    <a href="blogs.php" class="orange-btn how-it-works-btn">View All Blogs</a>
+                </div>
+            </div>
+        </section>
+        
         <section class="white-section">
             <div class="chart-con">
                 <?php echo file_get_contents('assets/chart.svg'); ?>
