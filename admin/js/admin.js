@@ -79,7 +79,12 @@ async function editBlog(id) {
             document.querySelector('select[name="author"]').value = blog.author;
             
             if (blog.image_url) {
-                document.getElementById('image-preview').src = '../' + blog.image_url;
+                // Check if it's a Firebase Storage URL (starts with https://) or local path
+                if (blog.image_url.startsWith('https://')) {
+                    document.getElementById('image-preview').src = blog.image_url;
+                } else {
+                    document.getElementById('image-preview').src = '../' + blog.image_url;
+                }
                 document.getElementById('image-preview').style.display = 'block';
                 document.querySelector('.adm-upload-placeholder').style.display = 'none';
             } else {

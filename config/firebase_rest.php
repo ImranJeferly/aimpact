@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/env.php';
 
+// Define Firebase project ID constant
+define('FIREBASE_PROJECT_ID', 'aimpact-7be8a');
+
 // Firebase REST API client - works without gRPC extension
 class FirebaseRestClient {
     private $projectId;

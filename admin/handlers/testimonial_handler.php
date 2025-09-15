@@ -1,5 +1,6 @@
 <?php
 require_once '../../config/firebase.php';
+require_once '../../config/firebase_storage.php';
 require_once 'firebase_auth_helper.php';
 
 // Verify Firebase Authentication token
@@ -9,7 +10,7 @@ $action = $_POST['action'] ?? '';
 
 switch ($action) {
     case 'add':
-    case 'edit':
+    case 'update':
         $client_name = $_POST['client_name'] ?? '';
         $company_name = $_POST['company_name'] ?? '';
         $position = $_POST['position'] ?? '';
@@ -18,17 +19,18 @@ switch ($action) {
         $featured = isset($_POST['featured']) ? 1 : 0;
         $id = $_POST['id'] ?? null;
         
-        // Handle image upload
+        // Handle image upload to Firebase Storage
         $image_url = null;
-        if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-            $upload_dir = '../../uploads/testimonials/';
-            if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $storageHelper = new FirebaseStorageHelper(FIREBASE_PROJECT_ID);
+            $uploadResult = $storageHelper->uploadFile($_FILES['image'], 'testimonials', 'testimonial');
             
-            $file_name = uniqid() . '-' . $_FILES['image']['name'];
-            move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $file_name);
-            $image_url = 'uploads/testimonials/' . $file_name;
+            if ($uploadResult['success']) {
+                $image_url = $uploadResult['downloadUrl'];
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Image upload failed: ' . $uploadResult['message']]);
+                exit;
+            }
         }
 
         if ($firebaseHelper && $firebaseHelper->isConnected()) {

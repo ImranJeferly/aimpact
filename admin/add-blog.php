@@ -1,6 +1,7 @@
 <?php
 // Firebase Authentication handles access control
 require_once '../config/firebase.php';
+require_once '../config/firebase_storage.php';
 
 $message = '';
 
@@ -13,50 +14,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Generate slug from title
     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
     
-    // Handle image upload if present
+    // Handle image upload to Firebase Storage
     $imageUrl = '';
+    $uploadError = false;
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = '../uploads/blogs/';
-        if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
+        $storageHelper = new FirebaseStorageHelper(FIREBASE_PROJECT_ID);
+        $uploadResult = $storageHelper->uploadFile($_FILES['image'], 'blogs', 'blog');
         
-        $fileExtension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $fileName = uniqid() . '.' . $fileExtension;
-        $uploadPath = $uploadDir . $fileName;
-        
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
-            $imageUrl = 'uploads/blogs/' . $fileName;
+        if ($uploadResult['success']) {
+            $imageUrl = $uploadResult['downloadUrl'];
+        } else {
+            $message = 'Error: Image upload failed - ' . $uploadResult['message'];
+            $uploadError = true;
         }
     }
     
-    // Prepare blog data for Firebase
-    $blogData = [
-        'title' => $title,
-        'slug' => $slug,
-        'content' => $content,
-        'status' => $status,
-        'author' => $author,
-        'image_url' => $imageUrl,
-        'views' => 0,
-        'created_at' => date('Y-m-d H:i:s'),
-        'updated_at' => date('Y-m-d H:i:s')
-    ];
-    
-    try {
-        // Add blog to Firebase
-        if ($firebaseHelper && $firebaseHelper->isConnected()) {
-            $blogId = $firebaseHelper->addBlog($blogData);
-            if ($blogId) {
-                $message = 'Blog post created successfully! ID: ' . $blogId;
+    // Only proceed with blog creation if there's no upload error
+    if (!$uploadError) {
+        // Prepare blog data for Firebase
+        $blogData = [
+            'title' => $title,
+            'slug' => $slug,
+            'content' => $content,
+            'status' => $status,
+            'author' => $author,
+            'image_url' => $imageUrl,
+            'views' => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+        
+        try {
+            // Add blog to Firebase
+            if ($firebaseHelper && $firebaseHelper->isConnected()) {
+                $blogId = $firebaseHelper->addBlog($blogData);
+                if ($blogId) {
+                    $message = 'Blog post created successfully! ID: ' . $blogId;
+                } else {
+                    $message = 'Error: Failed to create blog post in Firebase';
+                }
             } else {
-                $message = 'Error: Failed to create blog post in Firebase';
+                $message = 'Error: Firebase not connected';
             }
-        } else {
-            $message = 'Error: Firebase not connected';
+        } catch (Exception $e) {
+            $message = 'Error: ' . $e->getMessage();
         }
-    } catch (Exception $e) {
-        $message = 'Error: ' . $e->getMessage();
     }
 }
 ?>

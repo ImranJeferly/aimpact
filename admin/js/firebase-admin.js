@@ -68,7 +68,12 @@ window.editBlog = async function(id) {
             const uploadPlaceholder = document.querySelector('.adm-upload-placeholder');
             
             if (blog.image_url && imagePreview) {
-                imagePreview.src = '../' + blog.image_url;
+                // Check if it's a Firebase Storage URL (starts with https://) or local path
+                if (blog.image_url.startsWith('https://')) {
+                    imagePreview.src = blog.image_url;
+                } else {
+                    imagePreview.src = '../' + blog.image_url;
+                }
                 imagePreview.style.display = 'block';
                 if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
             } else if (imagePreview) {

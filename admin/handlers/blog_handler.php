@@ -1,5 +1,6 @@
 <?php
 require_once '../../config/firebase.php';
+require_once '../../config/firebase_storage.php';
 require_once 'firebase_auth_helper.php';
 
 // Verify Firebase Authentication token
@@ -15,17 +16,17 @@ switch ($action) {
         $author = $_POST['author'] ?? '';
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
         
-        // Handle image upload
+        // Handle image upload to Firebase Storage
         $image_url = null;
-        if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-            $upload_dir = '../../uploads/blogs/';
-            if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $storageHelper = new FirebaseStorageHelper(FIREBASE_PROJECT_ID);
+            $uploadResult = $storageHelper->uploadFile($_FILES['image'], 'blogs', 'blog');
             
-            $file_name = uniqid() . '-' . $_FILES['image']['name'];
-            if (move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $file_name)) {
-                $image_url = 'uploads/blogs/' . $file_name;
+            if ($uploadResult['success']) {
+                $image_url = $uploadResult['downloadUrl'];
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Image upload failed: ' . $uploadResult['message']]);
+                exit;
             }
         }
 
@@ -58,17 +59,18 @@ switch ($action) {
         $author = $_POST['author'] ?? '';
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
         
-        // Handle image upload
+        // Handle image upload to Firebase Storage
         $image_url = null;
-        if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-            $upload_dir = '../../uploads/blogs/';
-            if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $storageHelper = new FirebaseStorageHelper(FIREBASE_PROJECT_ID);
+            $uploadResult = $storageHelper->uploadFile($_FILES['image'], 'blogs', 'blog');
             
-            $file_name = uniqid() . '-' . $_FILES['image']['name'];
-            move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $file_name);
-            $image_url = 'uploads/blogs/' . $file_name;
+            if ($uploadResult['success']) {
+                $image_url = $uploadResult['downloadUrl'];
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Image upload failed: ' . $uploadResult['message']]);
+                exit;
+            }
         }
         
         if ($firebaseHelper && $firebaseHelper->isConnected()) {
