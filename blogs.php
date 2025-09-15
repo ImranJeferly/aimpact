@@ -9,8 +9,7 @@ $category = $_GET['category'] ?? '';
 $cacheKey = 'blogs_' . md5($search . '_' . $category);
 
 // Try to get from cache first (only if no search/filter)
-// Temporarily disable cache to debug the issue
-if (false && empty($search) && empty($category)) {
+if (empty($search) && empty($category)) {
     $blogs = $cache->get($cacheKey);
     if ($blogs !== null) {
         // Use cached data
@@ -22,12 +21,9 @@ if (false && empty($search) && empty($category)) {
 if ($firebaseHelper) {
     if ($search || $category) {
         $blogs = $firebaseHelper->searchBlogs($search, $category);
-        error_log("Search/Filter: Found " . count($blogs) . " blogs");
-        echo "<!-- DEBUG: Search found " . count($blogs) . " blogs -->";
     } else {
+        // Get published blogs (including those without status for backward compatibility)
         $blogs = $firebaseHelper->getAllBlogs('published');
-        error_log("Initial load: Found " . count($blogs) . " published blogs");
-        echo "<!-- DEBUG: Initial load found " . count($blogs) . " blogs -->";
         
         // Cache the results if no search/filter (cache for 5 minutes)
         if (!empty($blogs)) {
@@ -36,7 +32,6 @@ if ($firebaseHelper) {
     }
 } else {
     $blogs = [];
-    error_log("Firebase helper not available in blogs.php");
 }
 
 skip_query:
