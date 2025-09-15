@@ -428,7 +428,7 @@ require_once 'config/firebase.php';
                     <h2 class="fade-hidden fade-from-bottom">Latest from Our Blog</h2>
                     <p class="fade-hidden fade-from-bottom delay-short">Stay updated with the latest AI trends and insights</p>
                 </div>
-                <div class="blog-preview-grid">
+                <div class="blog-grid">
                     <?php
                     // Fetch latest 3 published blogs from Firebase (with fallback)
                     if ($firebaseHelper) {
@@ -440,26 +440,62 @@ require_once 'config/firebase.php';
                     }
 
                     foreach($latestBlogs as $blog): ?>
-                        <article class="blog-preview-card fade-hidden fade-from-bottom delay-medium">
+                        <article class="blog-card fade-hidden fade-from-bottom delay-medium">
                             <?php if($blog['image_url']): ?>
-                                <div class="blog-preview-image">
-                                    <img src="<?php echo htmlspecialchars($blog['image_url']); ?>" alt="<?php echo htmlspecialchars($blog['title']); ?>">
-                                </div>
+                                <img src="<?php echo htmlspecialchars($blog['image_url']); ?>" alt="<?php echo htmlspecialchars($blog['title']); ?>" class="blog-image">
                             <?php endif; ?>
-                            <div class="blog-preview-content">
-                                <h3><?php echo htmlspecialchars($blog['title']); ?></h3>
-                                <p><?php echo htmlspecialchars(substr($blog['excerpt'], 0, 120)) . '...'; ?></p>
-                                <div class="blog-preview-meta">
-                                    <span class="blog-preview-author"><?php echo htmlspecialchars($blog['author']); ?></span>
-                                    <span class="blog-preview-date"><?php echo date('M j, Y', strtotime($blog['published_date'])); ?></span>
+                            <div class="blog-content">
+                                <h2><?php echo htmlspecialchars($blog['title']); ?></h2>
+                                <div class="blog-meta">
+                                    <span>
+                                        <?php 
+                                            $displayName = match($blog['author']) {
+                                                'Imran' => 'Ron',
+                                                'Huseyn' => 'Hudson',
+                                                'Kamran' => 'Cameron',
+                                                default => $blog['author']
+                                            };
+                                            $authorImage = match($blog['author']) {
+                                                'Imran' => 'assets/authors/imran.png',
+                                                'Huseyn' => 'assets/authors/huseyn.png',
+                                                'Kamran' => 'assets/authors/kamran.png',
+                                                default => 'assets/authors/default.png'
+                                            };
+                                        ?>
+                                        <div class="author-info">
+                                            <img src="<?php echo $authorImage; ?>" alt="<?php echo htmlspecialchars($displayName); ?>" class="author-image">
+                                            <div class="author-details">
+                                                <?php echo htmlspecialchars($displayName); ?>
+                                                <br>
+                                                <small style="color: #848484; font-size: 0.8em;">Co-founder of AImpact</small>
+                                            </div>
+                                        </div>
+                                    </span>
+                                    <span><?php 
+                                        // Handle Firebase DateTime object or string
+                                        if (isset($blog['created_at'])) {
+                                            if ($blog['created_at'] instanceof DateTime) {
+                                                echo $blog['created_at']->format('M d, Y');
+                                            } else {
+                                                echo date('M d, Y', strtotime($blog['created_at']));
+                                            }
+                                        } else {
+                                            echo 'Recent';
+                                        }
+                                    ?></span>
                                 </div>
-                                <a href="blog.php?id=<?php echo $blog['id']; ?>" class="blog-preview-link">Read More</a>
+                                <p class="blog-excerpt"><?php echo substr(strip_tags($blog['content']), 0, 150) . '...'; ?></p>
+                                <p class="blog-preview"><?php 
+                                    $firstSentence = strtok(strip_tags($blog['content']), '.!?');
+                                    echo $firstSentence . '.'; 
+                                ?></p>
+                                <a href="blog.php?id=<?php echo $blog['id']; ?>" class="orange-btn blog-btn">Read More</a>
                             </div>
                         </article>
                     <?php endforeach; ?>
                     
                     <?php if (count($latestBlogs) === 0): ?>
-                        <div class="no-blogs">
+                        <div class="no-results">
                             <p>No blog posts available at the moment.</p>
                         </div>
                     <?php endif; ?>
