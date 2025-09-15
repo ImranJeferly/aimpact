@@ -191,24 +191,15 @@ class FirebaseRestHelper {
     // Blog operations
     public function getAllBlogs($status = null) {
         if (!$this->isConnected()) {
-            require_once __DIR__ . '/fallback_data.php';
-            $blogs = FallbackData::getSampleBlogs();
-            // Filter by status if specified
-            if ($status) {
-                return array_filter($blogs, function($blog) use ($status) {
-                    return isset($blog['status']) && $blog['status'] === $status;
-                });
-            }
-            return $blogs;
+            return []; // Return empty array instead of fallback data
         }
         
         try {
             $blogs = $this->client->getCollection('blogs');
             
-            // If no blogs found in Firebase, use fallback data
+            // Return empty array if no blogs found, don't use fallback
             if (empty($blogs)) {
-                require_once __DIR__ . '/fallback_data.php';
-                $blogs = FallbackData::getSampleBlogs();
+                return [];
             }
             
             // Filter by status if specified
@@ -228,15 +219,7 @@ class FirebaseRestHelper {
             return array_values($blogs);
         } catch (Exception $e) {
             error_log("Firebase REST getAllBlogs failed: " . $e->getMessage());
-            require_once __DIR__ . '/fallback_data.php';
-            $blogs = FallbackData::getSampleBlogs();
-            // Filter by status if specified for fallback data
-            if ($status) {
-                return array_filter($blogs, function($blog) use ($status) {
-                    return isset($blog['status']) && $blog['status'] === $status;
-                });
-            }
-            return $blogs;
+            return []; // Return empty array instead of fallback data
         }
     }
     
@@ -285,6 +268,28 @@ class FirebaseRestHelper {
         }
     }
     
+    public function incrementBlogViews($id) {
+        if (!$this->isConnected()) return false;
+        
+        try {
+            // Get current blog data first
+            $blog = $this->getBlogById($id);
+            if (!$blog) return false;
+            
+            // Only update the views count, preserving all other data
+            $currentViews = isset($blog['views']) ? (int)$blog['views'] : 0;
+            $updateData = [
+                'views' => $currentViews + 1,
+                'updated_at' => date('Y-m-d H:i:s')
+            ];
+            
+            return $this->client->updateDocument('blogs', $id, $updateData);
+        } catch (Exception $e) {
+            error_log("Firebase REST incrementBlogViews failed: " . $e->getMessage());
+            return false;
+        }
+    }
+    
     public function deleteBlog($id) {
         if (!$this->isConnected()) return false;
         
@@ -299,8 +304,7 @@ class FirebaseRestHelper {
     // Testimonial operations
     public function getAllTestimonials($status = 'approved') {
         if (!$this->isConnected()) {
-            require_once __DIR__ . '/fallback_data.php';
-            return FallbackData::getSampleTestimonials();
+            return []; // Return empty array instead of fallback data
         }
         
         try {
@@ -330,8 +334,7 @@ class FirebaseRestHelper {
             return array_values($testimonials);
         } catch (Exception $e) {
             error_log("Firebase REST getAllTestimonials failed: " . $e->getMessage());
-            require_once __DIR__ . '/fallback_data.php';
-            return FallbackData::getSampleTestimonials();
+            return []; // Return empty array instead of fallback data
         }
     }
     

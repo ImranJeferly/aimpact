@@ -19,8 +19,7 @@ if ($firebaseHelper) {
     
     // Update view count only if Firebase is connected (skip for fallback data)
     if ($firebaseHelper->isConnected()) {
-        $currentViews = isset($blog['views']) ? (int)$blog['views'] : 0;
-        $firebaseHelper->updateBlog($id, ['views' => $currentViews + 1]);
+        $firebaseHelper->incrementBlogViews($id);
     }
     
 } else {
